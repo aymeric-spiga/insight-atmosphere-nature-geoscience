@@ -3,10 +3,10 @@
 import sys
 import numpy as np
 #import matplotlib.pylab as mpl
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as mpl
-import ppplot
+#import matplotlib
+#matplotlib.use('TkAgg')
+#import matplotlib.pyplot as mpl
+#import ppplot
 import ppcompute
 from scipy.ndimage.measurements import minimum_position
 import time as timelib
@@ -731,7 +731,7 @@ def getpressure(data,suffix,window=None,ltset=None,code="PRE"):
     return pp[idx],dpp[idx],spp[idx],ltstpp[idx],timepp[idx],utcpp[idx]#,ratio
 ##############################
 ##############################
-def studypressure(sol,field,suffix,utcpp,ltstpp,ltbounds=None,droplim = -0.3,ltnum=False,isplot=True,window=None):
+def studypressure(sol,field,suffix,utcpp,ltstpp,ltbounds=None,droplim = -0.3,ltnum=False,isplot=False,window=None):
   fifi, output = namefile(sol,suffix)
   if ltbounds is None:
     ltbounds, ww = getparam(suffix)
@@ -840,6 +840,7 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,ltbounds=None,droplim = -0.3,ltn
       except:
        pass
       dafile.write('%2.2d %5.3f %s %s\n' % (ddcount[iii],drop[iii],ll,utcpp[indices[iii]]) )
+      ddcount[iii]=utcpp[indices[iii]]
       #print cltstpp[indices[iii]]
     dafile.close()
     #########
@@ -889,7 +890,9 @@ def dd_strongest(sol,suffix,data,spp,ddcount,indices,drop,ltstpp,timepp):
 #####################
 def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,window=None,datatype="mws"):
     dafile = open("./sol.txt","a")
-
+    print(soltab)
+    tabddcount=[]
+    tabdrop=[]
     listall = False
     if soltab is None:
       soltab = range(14,lastsol+1)
@@ -901,7 +904,9 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,windo
     ##########
     for suffix in sfxtab:
         for sol in soltab: 
-            
+
+            print sol
+
             fifi,output = namefile(sol,suffix)
             fifi = datafolder+"/"+fifi
             fname = './output/txt_per_sol/'+output+"DD_3.txt"
@@ -936,7 +941,9 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,windo
                   if len(pp) > 0:
                     message("calculating pressure drops for sol %i" % (sol))
                     indices, ddcount, drop, search = studypressure(sol,dpp,suffix,utcpp,ltstpp,window=window)
-                    dd_strongest(sol,suffix,pp,spp,ddcount,indices,drop,ltstpp,timepp)
+                    tabddcount = np.append(tabddcount,ddcount)
+                    tabdrop = np.append(tabdrop,drop)
+                    #dd_strongest(sol,suffix,pp,spp,ddcount,indices,drop,ltstpp,timepp)
                     ##### DONE AFTERWARDS NOW
                     #if listall and suffix == "":
                     #    #ratio = ratiodd(getsol(sol))
@@ -955,6 +962,7 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,windo
                 pass
     if listall:
         dafile.close()
+    return tabddcount,tabdrop
 
 ##########################
 ##########################
