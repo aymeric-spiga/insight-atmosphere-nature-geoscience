@@ -1367,7 +1367,7 @@ def multisol(solini=66,solsol=20,\
                       pl.color = tcinter[count]
 
                   outy = np.append(outy,pl.f)        
-                  outx = np.append(outy,pl.x) 
+                  outx = np.append(outx,pl.x) 
                   pl.make()      
                   count = count+1
 
