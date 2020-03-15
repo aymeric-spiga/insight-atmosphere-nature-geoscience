@@ -830,7 +830,7 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,ltbounds=None,droplim = -0.3,ltn
           wmin,wmax = winfound(cltstpp,iii)
           search[wmin:wmax] = 9999.
     ###
-    dafile = open("./output/txt_per_sol/"+fname+".txt","w")
+    dafile = open("./"+fname+".txt","w")
     for iii in range(len(indices)):
       try:
        ## patch for PDS-derived statistics
