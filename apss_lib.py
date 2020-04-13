@@ -250,6 +250,10 @@ def distantpds(sol,var="PRE",event=False):
             sol_link = "sol_0000_0122/"
         elif sol <= 210:
             sol_link = "sol_0123_0210/"
+        elif sol <= 300:
+            sol_link = "sol_0211_0300/"
+        elif sol <= 389:
+            sol_link = "sol_0301_0389/"
         else:
             exitmessage("NOT YET in PDS!")
     else:
