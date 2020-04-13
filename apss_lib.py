@@ -1245,7 +1245,10 @@ def multisol(solini=66,solsol=20,\
              mode="pdf",\
              pds=False,\
              addls=False,\
+             addlspos=1.05,\
+             facselec=0.84,\
              marker=None,\
+             addtxt=None,\
              fmt=None):
     outy = np.array([])
     outx = np.array([])
@@ -1262,7 +1265,7 @@ def multisol(solini=66,solsol=20,\
         pl.nxticks = nxticks
     pl.color = "b"
     pl.linestyle = "" 
-    pl.xlabel = "InSight sol (with fraction = "+timetype+"/24)"
+    pl.xlabel = "InSight sol" # (with fraction = "+timetype+"/24)"
     #pl.xlabel = "InSight sol"
     pl.ylabel = '%s (%s)' % (dict_name[code],dict_unit[code])
     if compute is not None:
@@ -1294,7 +1297,19 @@ def multisol(solini=66,solsol=20,\
         pl.fmt = fmt
     if title is not None:
         pl.title = title
-    for sol in range(solini,solini+solsol):
+
+    #####################
+    ### define here condition to select a sol for computation below
+    if len(ttinter) == 1:
+        ttmin, ttmax = ttinter[0][0],ttinter[0][1]
+        lentt = (ttmax - ttmin)*facselec # default is 20/24
+    else:
+        ttmin, ttmax = 0., 24. ## TBD: find something better
+        lentt = (ttmax - ttmin)*facselec ## TBD: find something better
+        lentt = 0.
+    #####################
+
+    for sol in range(solini,solini+solsol+1):
         try:
             ## get data
             if pds:
@@ -1312,7 +1327,7 @@ def multisol(solini=66,solsol=20,\
             #    ratio = -1.0
             #ratio = ratiodd(data,mean=13.,std=1.8)
 
-            if ratio > 0.7:
+            if ratio > 0.7: ## ratio deprecated with facselec
 
               ## get time
               time = gettime(data,timetype) 
@@ -1321,9 +1336,17 @@ def multisol(solini=66,solsol=20,\
               nm = get_not_missing(data,code)
               time = time[nm]
 
-              dtime = np.max(time)-np.min(time)
-              if dtime > 20.:
-            
+              ## get the minimal common interval request vs. data
+              tmin = np.min(time)
+              tmax = np.max(time)
+              zetmin = np.max([tmin,ttmin])
+              zetmax = np.min([tmax,ttmax])
+              dtime = zetmax - zetmin
+
+              if (dtime > lentt):
+
+                message("SELECTED sol=%i LT=[%.1f,%.1f]" % (sol,tmin,tmax))
+
                 ## smoothresample (all day to minimize the adverse impact of cuts)
                 if win is not None:
                   dpp,spp = smoothresample(data,code,freq=freq,window=win,complete=False)
@@ -1335,15 +1358,25 @@ def multisol(solini=66,solsol=20,\
                 ## loop to plot night.....evening sequence for each sol
                 count = 0
                 for tt in ttinter:            
-                               
-                  w = getwhere(time,mint=tt[0],maxt=tt[1])
 
+                 ### select locally (in the bins) if we have enough data
+                 ttminloc, ttmaxloc = tt[0],tt[1]
+                 lenttloc = (ttmaxloc - ttminloc)*facselec
+                 zetminloc = np.max([tmin,ttminloc])
+                 zetmaxloc = np.min([tmax,ttmaxloc])
+                 dtimeloc = zetmaxloc - zetminloc
+                 if (dtimeloc > lenttloc):          
+
+                  w = getwhere(time,mint=tt[0],maxt=tt[1])
+                 
                   pl.f = spp[w]
                   if detrend:
                       pl.f = dpp[w]
                   pl.x = sol + time[w]/24.
 
-                  if compute is not None:
+                  if len(pl.f) > 0:
+
+                    if compute is not None:
                       if compute == "std":
                           pl.f = np.std(pl.f)
                       elif compute == "mean":
@@ -1354,7 +1387,7 @@ def multisol(solini=66,solsol=20,\
                           pl.f = np.max(pl.f)
                       pl.x = np.mean(pl.x)                     
 
-                  if compute is not None and redpoint is not None:
+                    if compute is not None and redpoint is not None:
                       #dasol = np.round(pl.x,decimals=1)
                       #yaa = np.round(sol+(redpoint/24.),1)
                       #if dasol == yaa  or dasol == yaa+1:
@@ -1363,17 +1396,25 @@ def multisol(solini=66,solsol=20,\
                       else:
                           pl.color = "b"
 
-                  if compute is not None and tcinter is not None:
+                    if compute is not None and tcinter is not None:
                       pl.color = tcinter[count]
 
-                  outy = np.append(outy,pl.f)        
-                  outx = np.append(outx,pl.x) 
-                  pl.make()      
-                  count = count+1
-
+                    outy = np.append(outy,pl.f)        
+                    outx = np.append(outx,pl.x) 
+                    pl.make()      
+                    count = count+1
+                 else:
+                  message("NOT SELECTED LT=[%.1f,%.1f]" % (zetminloc,zetmaxloc))
+              else:
+                message("NOT SELECTED sol=%i LT=[%.1f,%.1f]" % (sol,tmin,tmax))
+                  
         except:
             pass
 
+    if addtxt is not None:
+        pl.x,pl.f = np.loadtxt(addtxt,unpack=True)
+        pl.color = "r"
+        pl.make()
 
     if addls:
         axisls(pl,addlspos=addlspos)
