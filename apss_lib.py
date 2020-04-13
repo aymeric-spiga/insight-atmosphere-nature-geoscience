@@ -1376,19 +1376,7 @@ def multisol(solini=66,solsol=20,\
 
 
     if addls:
-      for tt in ttab:
-        sol,ls = tt
-        if pl.xmin < sol < pl.xmax:
-            mm = np.max(pl.f) ; mn = np.min(pl.f)
-            pl.x, pl.f = [sol,sol], [pl.ymin,pl.ymax]
-            pl.marker, pl.linestyle = "", "--"
-            pl.color = 'm'    
-            pl.ax.text(sol,pl.ymax*1.05,r'$L_s=%i^{\circ}$'%(ls),\
-                    color = pl.color,horizontalalignment='center',verticalalignment='center',\
-                    fontsize=18)
-            #pl.ax = add_stripes(pl.ax)
-            pl.make()
-
+        axisls(pl,addlspos=addlspos)
 
     if filename is not None:
         ppplot.save(filename=filename+"_"+code,mode=mode)
@@ -1412,4 +1400,25 @@ def add_stripes(axes, alph = 0.05, col = "grey"):
         axes.axvspan(345, 346, alpha=alph, color=col)
         return axes
 
-
+###################################
+################################### to add Ls axis
+def axisls(pl,addlspos=1.05,col="m"):
+      for tt in ttab:
+        sol,ls = tt
+        if pl.xmin < sol < pl.xmax:
+            mm = np.max(pl.f) ; mn = np.min(pl.f)
+            if pl.ymax is not None:
+                pos = pl.ymax*addlspos
+                pl.f = [pl.ymin,pl.ymax]
+            else:
+                pos = mm*addlspos
+                pl.f = [mn,mm]
+            pl.legend = None
+            pl.x = [sol,sol]
+            pl.marker, pl.linestyle = "", "--"
+            pl.color = col    
+            pl.ax.text(sol,pos,r'$L_s=%i^{\circ}$'%(ls),\
+                    color = pl.color,horizontalalignment='center',verticalalignment='center',\
+                    fontsize=18)
+            #pl.ax = add_stripes(pl.ax)
+            pl.make()
