@@ -888,7 +888,7 @@ def dd_strongest(sol,suffix,data,spp,ddcount,indices,drop,ltstpp,timepp):
 #####################
 #####################
 def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,window=None,datatype="mws"):
-    dafile = open("./sol.txt","a")
+    #dafile = open("./sol.txt","a")
 
     listall = False
     if soltab is None:
@@ -953,8 +953,8 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,windo
                     pass
               except:
                 pass
-    if listall:
-        dafile.close()
+    #if listall:
+    #    dafile.close()
 
 ##########################
 ##########################
