@@ -1154,7 +1154,9 @@ eventbounds=None):
 
 ##########################
 ##########################
-def do_wavelet(data,code="PRE",freq=1,window=1000,mint=18,maxt=23,timetype='LTST',addsmooth=False,filename=None,perturbamp=None,title=None,tmin=None,tmax=None):
+def do_wavelet(data,code="PRE",freq=1,window=1000,mint=18,maxt=23,timetype='LTST',\
+               addsmooth=False,filename=None,perturbamp=None,title=None,\
+               tmin=None,tmax=None,ymin=None,ymax=None):
 
     import wavelet
 
@@ -1163,7 +1165,10 @@ def do_wavelet(data,code="PRE",freq=1,window=1000,mint=18,maxt=23,timetype='LTST
 
     ## plot smooth and detrend
     ## -- time axis from data is used
-    plotvar(datalim,code=[code],mint=mint,maxt=maxt,timetype=timetype,window=window,addsmooth=addsmooth,filename=filename,perturbamp=perturbamp,title=filename)
+    plotvar(datalim,code=[code],mint=mint,maxt=maxt,timetype=timetype,\
+            ymin=ymin,ymax=ymax,discrete=",",\
+            window=window,addsmooth=addsmooth,filename=filename,\
+            perturbamp=perturbamp,title="") #filename)
 
     ## resample and smooth
     ## -- time axis from data not used
