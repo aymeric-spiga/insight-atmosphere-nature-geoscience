@@ -735,7 +735,10 @@ def getpressure(data,suffix,window=None,ltset=None,code="PRE"):
     return pp[idx],dpp[idx],spp[idx],ltstpp[idx],timepp[idx],utcpp[idx]#,ratio
 ##############################
 ##############################
-def studypressure(sol,field,suffix,utcpp,ltstpp,ltbounds=None,droplim = -0.3,ltnum=False,isplot=True,window=None):
+def studypressure(sol,field,suffix,utcpp,ltstpp,\
+                  zefold="output",\
+                  ltbounds=None,droplim = -0.3,ltnum=False,\
+                  isplot=True,window=None):
   fifi, output = namefile(sol,suffix)
   if ltbounds is None:
     ltbounds, ww = getparam(suffix)
@@ -834,7 +837,7 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,ltbounds=None,droplim = -0.3,ltn
           wmin,wmax = winfound(cltstpp,iii)
           search[wmin:wmax] = 9999.
     ###
-    dafile = open("./output/txt_per_sol/"+fname+".txt","w")
+    dafile = open("./"+zefold+"/txt_per_sol/"+fname+".txt","w")
     for iii in range(len(indices)):
       try:
        ## patch for PDS-derived statistics
@@ -857,10 +860,10 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,ltbounds=None,droplim = -0.3,ltn
         pl.make()
   if isplot:
       #fig.suptitle('InSight/APSS', fontsize=22)
-      ppplot.save(filename=fname,mode="pdf",folder="./output/pdf_per_sol/")
+      ppplot.save(filename=fname,mode="pdf",folder="./"+zefold+"/pdf_per_sol/")
   return indices, ddcount, drop, search
 
-def dd_strongest(sol,suffix,data,spp,ddcount,indices,drop,ltstpp,timepp):
+def dd_strongest(sol,suffix,data,spp,ddcount,indices,drop,ltstpp,timepp,zefold):
   fifi, output = namefile(sol,suffix)
   nx=3 #5
   ny=2
@@ -887,11 +890,13 @@ def dd_strongest(sol,suffix,data,spp,ddcount,indices,drop,ltstpp,timepp):
       titi = '%.4dDD%2.2d // %5.2f Pa // %s LTST' % (sol,ddcount[dacount],drop[dacount],ll)#,utcpp[iii])
       axarr[count-1,col].set_title(titi)   
     fig.tight_layout()
-    ppplot.save(filename=output+"DDstrongest",folder='./output/pdf_per_sol_strongest/',mode="pdf")
+    ppplot.save(filename=output+"DDstrongest",folder='./'+zefold+'/pdf_per_sol_strongest/',mode="pdf")
 
 #####################
 #####################
-def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,window=None,datatype="mws"):
+def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,\
+                     zefold="output",\
+                     recalculate=False,window=None,datatype="mws"):
     #dafile = open("./sol.txt","a")
 
     listall = False
@@ -908,7 +913,7 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,windo
             
             fifi,output = namefile(sol,suffix)
             fifi = datafolder+"/"+fifi
-            fname = './output/txt_per_sol/'+output+"DD_3.txt"
+            fname = './'+zefold+'/txt_per_sol/'+output+"DD_3.txt"
             
             import os.path
             #test1 = os.path.isfile(fifi)
@@ -939,8 +944,8 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,recalculate=False,windo
                   
                   if len(pp) > 0:
                     message("calculating pressure drops for sol %i" % (sol))
-                    indices, ddcount, drop, search = studypressure(sol,dpp,suffix,utcpp,ltstpp,window=window)
-                    dd_strongest(sol,suffix,pp,spp,ddcount,indices,drop,ltstpp,timepp)
+                    indices, ddcount, drop, search = studypressure(sol,dpp,suffix,utcpp,ltstpp,window=window,zefold=zefold)
+                    dd_strongest(sol,suffix,pp,spp,ddcount,indices,drop,ltstpp,timepp,zefold)
                     ##### DONE AFTERWARDS NOW
                     #if listall and suffix == "":
                     #    #ratio = ratiodd(getsol(sol))
@@ -1149,7 +1154,9 @@ eventbounds=None):
 
 ##########################
 ##########################
-def do_wavelet(data,code="PRE",freq=1,window=1000,mint=18,maxt=23,timetype='LTST',addsmooth=False,filename=None,perturbamp=None,title=None,tmin=None,tmax=None):
+def do_wavelet(data,code="PRE",freq=1,window=1000,mint=18,maxt=23,timetype='LTST',\
+               addsmooth=False,filename=None,perturbamp=None,title=None,\
+               tmin=None,tmax=None,ymin=None,ymax=None):
 
     import wavelet
 
@@ -1158,7 +1165,10 @@ def do_wavelet(data,code="PRE",freq=1,window=1000,mint=18,maxt=23,timetype='LTST
 
     ## plot smooth and detrend
     ## -- time axis from data is used
-    plotvar(datalim,code=[code],mint=mint,maxt=maxt,timetype=timetype,window=window,addsmooth=addsmooth,filename=filename,perturbamp=perturbamp,title=filename)
+    plotvar(datalim,code=[code],mint=mint,maxt=maxt,timetype=timetype,\
+            ymin=ymin,ymax=ymax,discrete=",",\
+            window=window,addsmooth=addsmooth,filename=filename,\
+            perturbamp=perturbamp,title="") #filename)
 
     ## resample and smooth
     ## -- time axis from data not used
