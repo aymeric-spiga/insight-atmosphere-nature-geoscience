@@ -697,7 +697,7 @@ def getres(time):
 
 ##############################
 ############################## 
-def getpressure(data,suffix,window=None,ltset=None,code="PRE"):
+def getpressure(data,suffix,window=None,ltset=None,code="PRE",denoise=False):
   #### ************************
   #### first get data with data = getsol(sol)
   #### ************************
@@ -728,10 +728,20 @@ def getpressure(data,suffix,window=None,ltset=None,code="PRE"):
     try:
         ### do not use np.mean which does not know how to handle nan
         freq = ppcompute.max(data["PRESSURE_FREQUENCY"])
+        message("frequency %.1f" % (freq))
     except:
         freq = 2.  #20. to see ERPs #Hz
     #### !!! smoothresample breaks down if freq = nan
     dpp, spp = smoothresample(data,code,window=window,freq=freq)
+    if denoise:
+        if freq > 2.:
+            ## denoising with smoothing windows
+            message("denoising is on, window 0.5s (2 Hz)")
+            dppdn, sppdn = smoothresample(data,code,window=0.5,freq=freq) 
+            dpp = sppdn-spp
+        else:
+            ## no need to denoising
+            message("denoising is not needed, frequency is %.0f"%(freq))
     ####
     cltstpp = ltstfloat(ltstpp)
     idx = (cltstpp >= ltbounds[0])*(cltstpp <= ltbounds[1])
