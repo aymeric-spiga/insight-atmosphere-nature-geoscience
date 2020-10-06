@@ -753,9 +753,9 @@ def getpressure(data,suffix,window=None,ltset=None,code="PRE",denoise=False):
 ##############################
 ##############################
 def studypressure(sol,field,suffix,utcpp,ltstpp,\
-                  zefold="output",\
+                  zefold="output",winsearch=50,test_cell=False,\
                   ltbounds=None,droplim = -0.3,ltnum=False,\
-                  isplot=True,window=None):
+                  isplot=True,window=1000.):
   fifi, output = namefile(sol,suffix)
   if ltbounds is None:
     ltbounds, ww = getparam(suffix)
@@ -810,11 +810,15 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,\
       #pl.xdate = True
       pl.make()
       #########
+  ##########################
+  if test_cell:
+      message("drops too close to convective cell maximum are excluded")   
+  ##########################
   ## p < 0.3 pour les gros (sur le smooth direct) 
   ## gradient pour les petits (sur le detrend ?)
   indices = [] ; ddcount = [] ; drop = []
   search = np.empty_like(field) ; search[:] = field[:]
-  fname = output+"DD_%.0f" % (-droplim*10)
+  fname = output+"DD_%.0f" % (3) #(-droplim*10)
   #print fname
   #import os.path
   #test = os.path.isfile(fname+".txt") 
@@ -826,11 +830,15 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,\
       utcpp = utcpp[~w]
       cltstpp = cltstpp[~w]
   #######################
+  if droplim > 0.:
+      droplim = -histopress(sol,field)
+      message("adaptative drop limit %.2f" % (droplim))
+  #######################
   test = False
   if (suffix == "") and (not test):
     countdd = 0 ; droptest = -9999.
     while droptest < droplim: 
-      countdd += 1
+      
       iii = minimum_position(search)
       droptest = round(search[iii],2)
       ### if one appears twice in a row, we stop the procedure
@@ -847,11 +855,21 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,\
           #indices, ddcount, drop = indices[:-1], ddcount[:-1], drop[:-1]
           break
       else:
-          indices.append(iii[0])
-          ddcount.append(countdd)
-          drop.append(search[iii])
+          ## optional: test false positiveness wrt convective cells
+          if test_cell:
+              imin,imax = winfound(cltstpp,iii,winsearch=5.*winsearch)
+              ccells = np.max(field[imin:imax])
+              dadatest = -search[iii] < ccells+0.1
+          else:
+              dadatest = False
+          ## record drop event
+          if not dadatest:
+              countdd += 1
+              indices.append(iii[0])
+              ddcount.append(countdd)
+              drop.append(search[iii])
           ## define interval in which not to search anymore
-          wmin,wmax = winfound(cltstpp,iii)
+          wmin,wmax = winfound(cltstpp,iii,winsearch=winsearch)
           search[wmin:wmax] = 9999.
     ###
     dafile = open("./"+zefold+"/txt_per_sol/"+fname+".txt","w")
@@ -871,7 +889,7 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,\
         pl.f = 0.8 - 0.2*search/9999.
         pl.x = cltstpp
         try:
-            pl.legend = '%i drops $\delta P < %.1f$ Pa' % (ddcount[-1],droplim) 
+            pl.legend = '%i drops $\delta P < %.2f$ Pa' % (ddcount[-1],droplim) 
         except:
             pass
         pl.make()
