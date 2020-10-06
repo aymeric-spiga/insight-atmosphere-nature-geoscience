@@ -927,11 +927,114 @@ def dd_strongest(sol,suffix,data,spp,ddcount,indices,drop,ltstpp,timepp,zefold):
     fig.tight_layout()
     ppplot.save(filename=output+"DDstrongest",folder='./'+zefold+'/pdf_per_sol_strongest/',mode="pdf")
 
+def histopress(sol,dpp):
+  pos,neg = dpp[dpp>0], -dpp[dpp<0]
+  yy,  xx  = np.histogram(pos,range=[0.0,1.0],bins=100) #,density=True)
+  yy2, xx2 = np.histogram(neg,range=[0.0,1.0],bins=100) #,density=True)
+  ## limit
+  w = np.where(yy2/yy > 10.)
+  if w[0].size == 0:
+      lim = 0.35
+      message('adaptative limit cannot be determined, took %.2f' % (lim))
+  else:
+      lim = np.min(xx2[w])
+  ##dafile = open("./lim.txt","a")
+  ## plot
+  if 1 == 1:
+    fig = ppplot.figuref(x=10,y=8)
+    ppplot.changefont(18)
+    pl = ppplot.plot1d(fig=fig)
+    pl.xmin = 0
+    pl.xmax = 0.6 #1
+    pl.nxticks = 12
+    ##pl.title = "sol %i // std %.2f Pa // lim %.2f Pa" % (sol,np.std(dpp),lim)
+    #pl.title = "sol %i" % (sol)
+    pl.xlabel = "Pressure perturbation (Pa)"
+    pl.ylabel = "Population"
+    #pl.f = ppcompute.smooth1d(yy,window=5) 
+    #pl.x = ppcompute.smooth1d(xx[:-1],window=5) 
+    pl.f, pl.x = yy, xx[:-1]
+    pl.legend = "positive perturbations"
+    pl.logy = True
+    pl.color = "r"
+    pl.make()
+    #pl.f = yy2
+    #pl.x = xx2[:-1]
+    #pl.f = ppcompute.smooth1d(yy2,window=5)
+    #pl.x = ppcompute.smooth1d(xx2[:-1],window=5)
+    pl.f, pl.x = yy2, xx2[:-1]
+    pl.legend = "negative perturbations"
+    pl.color = "b"
+    pl.make()
+    ##pl.f = [np.max(yy2),np.min(yy2)]
+    ##pl.x = [0.3,0.3]
+    ##pl.color = "r"
+    ##pl.linestyle = "--"
+    #pl.legend = None
+    ##pl.make()
+    #pl.f = [np.max(yy2),np.min(yy2)]
+    #pl.title = pl.title + " " + "%.2f" % (lim)
+    #pl.x = [lim,lim]
+    #pl.color = "m"
+    #pl.linestyle = "--"
+    #pl.makeshow()
+    ppplot.save(mode="pdf",filename="histopress")
+  return lim
+
+def dd_check(sol,suffix,data,spp,dpp,ddcount,indices,drop,ltstpp,timepp,zefold,winsearch): 
+  import ppplot
+  fifi, output = namefile(sol,suffix)
+  cltstpp = ltstfloat(ltstpp)
+  yyy = ddcount[-1]
+  for dacount in np.arange(yyy):
+      iii = indices[dacount]
+      imin,imax = winfound(cltstpp,iii,winsearch=5.*winsearch)
+      ccells = np.max(dpp[imin:imax])
+      #checkmean = np.mean(dpp[imin:imax])
+      fig = ppplot.figuref(x=24,y=4)
+      pl = ppplot.plot1d(fig=fig)
+      pl.f = data[imin:imax]
+      pl.x = timepp[imin:imax]
+      pl.fmt = '%.1f'
+      pl.ylabel = r'$P$ (Pa)'
+      pl.xlabel = r'seconds'
+      pl.make()
+      pl.f = spp[imin:imax]
+      pl.x = timepp[imin:imax]
+      pl.make()
+      pl.f = spp[imin:imax]+dpp[imin:imax]
+      pl.marker = ""
+      pl.color = 'r'
+      pl.linestyle = "-"
+      pl.make()
+      ####
+      imin,imax = winfound(cltstpp,iii,winsearch=winsearch)
+      mn = np.min(data[imin:imax])
+      mx = np.max(data[imin:imax])
+      pl.f = [mn,mx]
+      pl.x = [timepp[imin],timepp[imin]]
+      pl.linestyle = "--"
+      pl.color = "k"
+      pl.marker = ""
+      pl.make()
+      pl.f = [mn,mx]
+      pl.x = [timepp[imax],timepp[imax]]
+      pl.make() 
+      ####
+      ## patch for PDS-derived statistics
+      ll = ltstpp[iii]
+      if len(ll) > 8:
+          ll = ll[6:]
+      titi = '%.4dDD%2.2d // %5.2f Pa // %s LTST // +%.2f Pa' % (sol,ddcount[dacount],drop[dacount],ll,ccells)#,ccells2,checkmean)#,utcpp[iii])
+      pl.title = titi
+      pl.makeshow()
+
 #####################
 #####################
-def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,\
-                     zefold="output",\
-                     recalculate=False,window=None,datatype="mws"):
+def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,detailed_check=False,\
+                     zefold="output",denoise=False,droplim=-0.3,winsearch=50,\
+                     test_cell=False,\
+                     recalculate=False,window=1000.,datatype="mws"):
     #dafile = open("./sol.txt","a")
 
     listall = False
@@ -975,12 +1078,14 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,\
                     data = getsol(sol,var="PRE",distant=True)
 
                 if suffix == "":
-                  pp,dpp,spp,ltstpp,timepp,utcpp = getpressure(data,suffix,window=window)
-                  
+                  pp,dpp,spp,ltstpp,timepp,utcpp = getpressure(data,suffix,window=window,denoise=denoise)
+
                   if len(pp) > 0:
                     message("calculating pressure drops for sol %i" % (sol))
-                    indices, ddcount, drop, search = studypressure(sol,dpp,suffix,utcpp,ltstpp,window=window,zefold=zefold)
+                    indices, ddcount, drop, search = studypressure(sol,dpp,suffix,utcpp,ltstpp,window=window,zefold=zefold,droplim=droplim,winsearch=winsearch,test_cell=test_cell)
                     dd_strongest(sol,suffix,pp,spp,ddcount,indices,drop,ltstpp,timepp,zefold)
+                    if detailed_check:
+                        dd_check(sol,suffix,pp,spp,dpp,ddcount,indices,drop,ltstpp,timepp,zefold,winsearch=winsearch)
                     ##### DONE AFTERWARDS NOW
                     #if listall and suffix == "":
                     #    #ratio = ratiodd(getsol(sol))
