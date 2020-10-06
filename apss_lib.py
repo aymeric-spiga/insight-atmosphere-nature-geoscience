@@ -562,9 +562,14 @@ def detrendsmooth(data,window):
   ntt = data.size
   #print nt, ntt
   nn = (nt-ntt)/2
-  datasmooth = datasmooth[nn:nt-nn-1]
-  #print nn, datasmooth.size
+  if nn == 2:
+      datasmooth = datasmooth[2:nt-2]
+  elif nn != 0:
+      datasmooth = datasmooth[nn:nt-nn-1]
+  if data.size != datasmooth.size:
+      print "AAAAAAAAAAAAAAAAAAAA",data.size, datasmooth.size, nn
   detrend = data - datasmooth
+  #print nn, datasmooth.size
   return detrend, datasmooth
 ###################################
 ###################################
