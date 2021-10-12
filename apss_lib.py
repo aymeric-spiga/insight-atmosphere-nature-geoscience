@@ -1618,7 +1618,7 @@ def axisls(pl,addlspos=1.05,col="m"):
             pl.x = [sol,sol]
             pl.marker, pl.linestyle = "", "--"
             pl.color = col    
-            pl.ax.text(sol,pos,r'$L_s=%i^{\circ}$'%(ls),\
+            pl.ax.text(sol,pos,r'$%i^{\circ}$'%(ls),\
                     color = pl.color,horizontalalignment='center',verticalalignment='center',\
                     fontsize=18)
             #pl.ax = add_stripes(pl.ax)
