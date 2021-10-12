@@ -759,7 +759,7 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,\
                   zefold="output",winsearch=50,test_cell=False,\
                   ltbounds=None,droplim = -0.3,ltnum=False,\
                   isplot=True,window=1000.):
-  fifi, output = namefile(sol,suffix)
+  fifi, output = namefile(sol,"") #suffix)
   if ltbounds is None:
     ltbounds, ww = getparam(suffix)
   else:
@@ -838,7 +838,8 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,\
       message("adaptative drop limit %.2f" % (droplim))
   #######################
   test = False
-  if (suffix == "") and (not test):
+  #if (suffix == "") and (not test):
+  if not test:
     countdd = 0 ; droptest = -9999.
     while droptest < droplim: 
       
@@ -902,11 +903,12 @@ def studypressure(sol,field,suffix,utcpp,ltstpp,\
   return indices, ddcount, drop, search
 
 def dd_strongest(sol,suffix,data,spp,ddcount,indices,drop,ltstpp,timepp,zefold):
-  fifi, output = namefile(sol,suffix)
+  fifi, output = namefile(sol,"") #suffix)
   nx=3 #5
   ny=2
   cltstpp = ltstfloat(ltstpp)
-  if suffix == "" and ddcount[-1] >= (nx*ny):
+  #if suffix == "" and ddcount[-1] >= (nx*ny):
+  if ddcount[-1] >= (nx*ny):
     ####
     fig = mpl.figure(figsize=(20,nx*3))
     axarr = fig.subplots(nx, ny)
@@ -986,7 +988,7 @@ def histopress(sol,dpp):
 
 def dd_check(sol,suffix,data,spp,dpp,ddcount,indices,drop,ltstpp,timepp,zefold,winsearch): 
   import ppplot
-  fifi, output = namefile(sol,suffix)
+  fifi, output = namefile(sol,"") #suffix)
   cltstpp = ltstfloat(ltstpp)
   yyy = ddcount[-1]
   for dacount in np.arange(yyy):
@@ -1052,7 +1054,7 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,detailed_check=False,\
     for suffix in sfxtab:
         for sol in soltab: 
             
-            fifi,output = namefile(sol,suffix)
+            fifi,output = namefile(sol,"") #suffix)
             fifi = datafolder+"/"+fifi
             fname = './'+zefold+'/txt_per_sol/'+output+"DD_3.txt"
             
@@ -1080,7 +1082,8 @@ def analyze_pressure(lastsol=400,soltab=None,sfxtab=None,detailed_check=False,\
                 elif datatype == "pds":
                     data = getsol(sol,var="PRE",distant=True)
 
-                if suffix == "":
+                #if suffix == "":
+                if 1 == 1:
                   pp,dpp,spp,ltstpp,timepp,utcpp = getpressure(data,suffix,window=window,denoise=denoise)
 
                   if len(pp) > 0:
