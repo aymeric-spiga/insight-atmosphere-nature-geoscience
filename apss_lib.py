@@ -665,10 +665,10 @@ def getparam(suffix):
                 # w 500s a bit underestimated (because drop starts to be appearing in smoothed series)
                 # or even 2000s but then too much false positives...
   elif suffix == "evening":
-      ltbounds = [18.,23.]
+      ltbounds = [18.,24.]
       ww = 1000 # 500 too small! 
   elif suffix == "night":
-      ltbounds = [01.,06.]
+      ltbounds = [01.,07.]
       ww = 1000
   else:
       ltbounds = [00.,24.]
@@ -744,8 +744,11 @@ def getpressure(data,suffix,window=None,ltset=None,code="PRE",denoise=False):
             message("denoising is not needed, frequency is %.0f"%(freq))
     ####
     cltstpp = ltstfloat(ltstpp)
-    idx = (cltstpp >= ltbounds[0])*(cltstpp <= ltbounds[1])
-    w = np.where(idx)
+    if np.max(cltstpp) < ltbounds[0] or np.min(cltstpp) > ltbounds[1]:
+        w = []
+    else:
+        idx = (cltstpp >= ltbounds[0])*(cltstpp <= ltbounds[1])
+        w = np.where(idx)
     if len(w) == 0:
         exitmessage("problem with local time bounds")
     #zedate = makedate(utcpp) #???
